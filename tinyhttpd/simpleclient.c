@@ -11,7 +11,7 @@ int main(int argc, char *argv[])
  socklen_t len;
  struct sockaddr_in address;
  int result;
- char buf[32] = "GET / HTTP/1.1\n\n\n";
+ char buf[32] = "GET /index.html HTTP/1.1\n\n\n";
  char get[2048]={0};
 
  sockfd = socket(AF_INET, SOCK_STREAM, 0);

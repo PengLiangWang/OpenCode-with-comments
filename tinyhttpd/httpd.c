@@ -35,7 +35,7 @@ void bad_request(int);
 void cat(int, FILE *);
 void cannot_execute(int);
 void error_die(const char *);
-void execute_cgi(int, const char *, const char *, const char *);
+void execute_cgi(int, const char *, const char *, const char *);   //有待研究
 int get_line(int, char *, int);
 void headers(int, const char *);
 void not_found(int);
@@ -65,7 +65,7 @@ void accept_request(void *tempclient)
     numchars = get_line(client, buf, sizeof(buf));
     i = 0; j = 0;
     /*把客户端的请求方法存到 method 数组*/
-    while (!ISspace(buf[j]) && (i < sizeof(method) - 1))
+    while (!ISspace(buf[j]) && (i < sizeof(method) - 1))    //遇到空格,换行,制表符循环退出
     {
         method[i] = buf[j];
         i++; j++;
@@ -95,6 +95,7 @@ void accept_request(void *tempclient)
         i++; j++;
     }
     url[i] = '\0';
+    printf("url: %s\n", url);    //获取GET后的 url地址 /index.html(下面会查找本地htdocs目录下的文件)
 
     /*处理 GET 方法*/
     if (strcasecmp(method, "GET") == 0)
@@ -118,7 +119,9 @@ void accept_request(void *tempclient)
     /*默认情况为 index.html */
     if (path[strlen(path) - 1] == '/')
         strcat(path, "index.html");
-    /*根据路径找到对应文件 */
+    printf("path: %s\nbuf: %s\n", path, buf);      //buf请求的第一行
+
+    /*根据路径找到对应文件 stat 通过文件名获取文件信息, 并保存在buf所指向的结构体stat中*/
     if (stat(path, &st) == -1) {
         /*把所有 headers 的信息都丢弃*/
         while ((numchars > 0) && strcmp("\n", buf))  /* read & discard headers */
@@ -130,9 +133,15 @@ void accept_request(void *tempclient)
     {
         /*如果是个目录，则默认使用该目录下 index.html 文件*/
         if ((st.st_mode & S_IFMT) == S_IFDIR)
+        {
+            printf("是目录.\n");
             strcat(path, "/index.html");
-      if ((st.st_mode & S_IXUSR) || (st.st_mode & S_IXGRP) || (st.st_mode & S_IXOTH)    )
+        }
+      if ((st.st_mode & S_IXUSR) || (st.st_mode & S_IXGRP) || (st.st_mode & S_IXOTH))    //检查文件可执行权限
+      {
+          printf("具有可执行权限.\n");
           cgi = 1;
+      }
       /*不是 cgi,直接把服务器文件返回，否则执行 cgi */
       if (!cgi)
           serve_file(client, path);
@@ -220,7 +229,7 @@ void error_die(const char *sc)
 /* Execute a CGI script.  Will need to set environment variables as
  * appropriate.
  * Parameters: client socket descriptor
- *             path to the CGI script */
+ *             path to the CGI script , 如果携带有参数， 则query_string指向 url 中 ? 后面的 GET 参数*/
 /**********************************************************************/
 void execute_cgi(int client, const char *path, const char *method, const char *query_string)
 {
@@ -236,7 +245,7 @@ void execute_cgi(int client, const char *path, const char *method, const char *q
 
     buf[0] = 'A'; buf[1] = '\0';
     if (strcasecmp(method, "GET") == 0)
-        /*把所有的 HTTP header 读取并丢弃*/
+        /*把所有的 HTTP header 读取并丢弃, 必须要读完客户端发来的头部，否则后来的send不能正常显示在浏览器中.*/
         while ((numchars > 0) && strcmp("\n", buf))  /* read & discard headers */
             numchars = get_line(client, buf, sizeof(buf));
     else    /* POST */
@@ -288,7 +297,7 @@ void execute_cgi(int client, const char *path, const char *method, const char *q
         char query_env[255];
         char length_env[255];
 
-        /* 把 STDOUT 重定向到 cgi_output 的写入端 */
+        /* 把 STDOUT(1代表标准输出) 重定向到 cgi_output 的写入端 */
         dup2(cgi_output[1], 1);
         /* 把 STDIN 重定向到 cgi_input 的读取端 */
         dup2(cgi_input[0], 0);
@@ -447,13 +456,17 @@ void not_found(int client)
 void serve_file(int client, const char *filename)
 {
     FILE *resource = NULL;
-    int numchars = 1;
+    int numchars = 2;
     char buf[1024];
 
     /*读取并丢弃 header */
     buf[0] = 'A'; buf[1] = '\0';
     while ((numchars > 0) && strcmp("\n", buf))  /* read & discard headers */
+    {
+        printf("numchars:%d, buf:%s\n", numchars, buf);
         numchars = get_line(client, buf, sizeof(buf));
+        printf("numchars:%d, buf:%s\n", numchars, buf);   //读出的buf已经是空, 说明client内头信息已清空
+    }
 
     /*打开 sever 的文件*/
     resource = fopen(filename, "r");
@@ -462,7 +475,7 @@ void serve_file(int client, const char *filename)
     else
     {
         /*写 HTTP header */
-        headers(client, filename);
+        headers(client, filename);      //先发头信息, 再发正文信息
         /*复制文件*/
         cat(client, resource);
     }
