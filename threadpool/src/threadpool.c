@@ -79,7 +79,7 @@ typedef struct {
 /**
  * 线程池的结构定义
  *  @var lock         用于内部工作的互斥锁
- *  @var notify       线程间通知的条件变量
+ *  @var notify       线程间通知的条件变量, 条件变量是利用线程间共享的全局变量进行同步的一种机制
  *  @var threads      线程数组，这里用指针来表示，数组名 = 首元素指针
  *  @var thread_count 线程数量
  *  @var queue        存储任务的数组，即任务队列
@@ -317,7 +317,7 @@ int threadpool_free(threadpool_t *pool)
 static void *threadpool_thread(void *threadpool)
 {
     threadpool_t *pool = (threadpool_t *)threadpool;
-    threadpool_task_t task;
+    threadpool_task_t task;     //存储任务的数组, 即任务队列
 
     for(;;) {
         /* Lock must be taken to wait on conditional variable */
@@ -328,7 +328,7 @@ static void *threadpool_thread(void *threadpool)
            When returning from pthread_cond_wait(), we own the lock. */
         /* 用 while 是为了在唤醒时重新检查条件 */
         while((pool->count == 0) && (!pool->shutdown)) {
-            /* 任务队列为空，且线程池没有关闭时阻塞在这里 */
+            /* 任务队列为空，且线程池没有关闭时阻塞在这里 ,  进入wait状态就会自动 release mutex*/
             pthread_cond_wait(&(pool->notify), &(pool->lock));
         }
 

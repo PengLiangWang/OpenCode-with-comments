@@ -38,7 +38,7 @@ int main(int argc, char **argv)
         pthread_mutex_unlock(&lock);
     }
 
-    fprintf(stderr, "Added %d tasks\n", tasks);
+    fprintf(stderr, "Added %d tasks\n", tasks); 
 
     /* 不断检查任务数是否完成一半以上，没有则继续休眠 */
     while((tasks / 2) > done) {

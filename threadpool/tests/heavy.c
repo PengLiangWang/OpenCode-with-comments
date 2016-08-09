@@ -14,6 +14,7 @@
  * platforms: because of each thread (and there will be THREAD *
  * QUEUES of them) will allocate its own stack (8 MB is the default on
  * Linux), you'll quickly run out of virtual space.
+ * 如果assert()的条件fail了，那么会调用abort()函数让kernel杀掉自己
  */
 
 threadpool_t *pool[QUEUES];
