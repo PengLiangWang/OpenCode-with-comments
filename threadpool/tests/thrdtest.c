@@ -26,7 +26,7 @@ int main(int argc, char **argv)
     /* 初始化互斥锁 */
     pthread_mutex_init(&lock, NULL);
 
-    /* 断言线程池创建成功 */
+    /* 断言线程池创建成功,  pool即为创建返回的线程池*/
     assert((pool = threadpool_create(THREAD, QUEUE, 0)) != NULL);
     fprintf(stderr, "Pool started with %d threads and "
             "queue size of %d\n", THREAD, QUEUE);
@@ -44,9 +44,9 @@ int main(int argc, char **argv)
     while((tasks / 2) > done) {
         usleep(10000);
     }
-    /* 这时候销毁线程池,0 代表 immediate_shutdown */
+    /* 这时候销毁线程池,0 代表 immediate_shutdown , 1代表执行完线程池中所有线程才销毁*/
     assert(threadpool_destroy(pool, 0) == 0);
-    fprintf(stderr, "Did %d tasks\n", done);
+    fprintf(stderr, "Did %d tasks\n", done);   /*完成了多少任务*/
 
     return 0;
 }

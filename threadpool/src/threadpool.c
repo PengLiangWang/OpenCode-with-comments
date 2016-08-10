@@ -82,7 +82,7 @@ typedef struct {
  *  @var notify       线程间通知的条件变量, 条件变量是利用线程间共享的全局变量进行同步的一种机制
  *  @var threads      线程数组，这里用指针来表示，数组名 = 首元素指针
  *  @var thread_count 线程数量
- *  @var queue        存储任务的数组，即任务队列
+ *  @var queue        存储任务的数组，即任务队列, 结构体数组
  *  @var queue_size   任务队列大小
  *  @var head         任务队列中首个任务位置（注：任务队列中所有任务都是未开始运行的）
  *  @var tail         任务队列中最后一个任务的下一个位置（注：队列以数组存储，head 和 tail 指示队列位置）
@@ -134,17 +134,17 @@ threadpool_t *threadpool_create(int thread_count, int queue_size, int flags)
     /* Initialize */
     pool->thread_count = 0;
     pool->queue_size = queue_size;
-    pool->head = pool->tail = pool->count = 0;
-    pool->shutdown = pool->started = 0;
+    pool->head = pool->tail = pool->count = 0;    /* pool->count 任务队列中的任务数 */
+    pool->shutdown = pool->started = 0;          /* 开始的线程数 */
 
     /* Allocate thread and task queue */
     /* 申请线程数组和任务队列所需的内存 */
-    pool->threads = (pthread_t *)malloc(sizeof(pthread_t) * thread_count);
+    pool->threads = (pthread_t *)malloc(sizeof(pthread_t) * thread_count);   /* 申请线程数组大小 */
     pool->queue = (threadpool_task_t *)malloc
-        (sizeof(threadpool_task_t) * queue_size);
+        (sizeof(threadpool_task_t) * queue_size);      /* 申请任务队列大小*/
 
     /* Initialize mutex and conditional variable first */
-    /* 初始化互斥锁和条件变量 */
+    /* 初始化互斥锁和条件变量 ,  pthread_mutex_init第二个参数为NULL, 使用默认互斥锁属性, 默认属性为快速互斥锁*/
     if((pthread_mutex_init(&(pool->lock), NULL) != 0) ||
        (pthread_cond_init(&(pool->notify), NULL) != 0) ||
        (pool->threads == NULL) ||
@@ -153,15 +153,15 @@ threadpool_t *threadpool_create(int thread_count, int queue_size, int flags)
     }
 
     /* Start worker threads */
-    /* 创建指定数量的线程开始运行 */
+    /* 创建指定数量的线程开始运行, 参数传递结构体 pool */
     for(i = 0; i < thread_count; i++) {
         if(pthread_create(&(pool->threads[i]), NULL,
                           threadpool_thread, (void*)pool) != 0) {
             threadpool_destroy(pool, 0);
             return NULL;
         }
-        pool->thread_count++;
-        pool->started++;
+        pool->thread_count++;    /*线程数量*/
+        pool->started++;         /*开始线程数*/
     }
 
     return pool;
@@ -260,7 +260,7 @@ int threadpool_destroy(threadpool_t *pool, int flags)
             break;
         }
 
-        /* 获取指定的关闭方式 */
+        /* 获取指定的关闭方式 flags等于0, 取immediate_shutdown,  flags等于1， 取graceful_shutdown*/
         pool->shutdown = (flags & threadpool_graceful) ?
             graceful_shutdown : immediate_shutdown;
 
@@ -317,7 +317,7 @@ int threadpool_free(threadpool_t *pool)
 static void *threadpool_thread(void *threadpool)
 {
     threadpool_t *pool = (threadpool_t *)threadpool;
-    threadpool_task_t task;     //存储任务的数组, 即任务队列
+    threadpool_task_t task;     //线程池中一个任务的定义
 
     for(;;) {
         /* Lock must be taken to wait on conditional variable */
@@ -332,7 +332,7 @@ static void *threadpool_thread(void *threadpool)
             pthread_cond_wait(&(pool->notify), &(pool->lock));
         }
 
-        /* 关闭的处理 */
+        /* 关闭的处理 graceful_shutdown优雅的关闭线程池(需要等待线程全部执行结束)*/
         if((pool->shutdown == immediate_shutdown) ||
            ((pool->shutdown == graceful_shutdown) &&
             (pool->count == 0))) {

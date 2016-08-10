@@ -17,7 +17,7 @@
  * 如果assert()的条件fail了，那么会调用abort()函数让kernel杀掉自己
  */
 
-threadpool_t *pool[QUEUES];
+threadpool_t *pool[QUEUES];     //创建多个内存池
 int tasks[SIZE], left;
 pthread_mutex_t lock;
 
@@ -50,6 +50,7 @@ int main(int argc, char **argv)
 
     usleep(10);
 
+    /*往线程池0 中添加 SIZE个任务*/
     for(i = 0; i < SIZE; i++) {
         tasks[i] = 0;
         assert(threadpool_add(pool[0], &dummy_task, &(tasks[i]), 0) == 0);

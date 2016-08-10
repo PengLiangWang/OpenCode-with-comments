@@ -13,7 +13,7 @@ int left;
 pthread_mutex_t lock;
 
 int error;
-
+/*子线程函数*/
 void dummy_task(void *arg) {
     usleep(100);
     pthread_mutex_lock(&lock);
@@ -35,6 +35,7 @@ int main(int argc, char **argv)
     }
     assert(threadpool_destroy(pool, 0) == 0);
     assert(left > 0);
+    printf("immediate_shutdown left: %d\n", left);
 
     /* Testing graceful shutdown */
     left = SIZE;
@@ -44,6 +45,7 @@ int main(int argc, char **argv)
     }
     assert(threadpool_destroy(pool, threadpool_graceful) == 0);
     assert(left == 0);
+    printf("graceful_shutdown left: %d\n", left);
 
     pthread_mutex_destroy(&lock);
 
