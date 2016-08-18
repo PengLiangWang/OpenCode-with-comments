@@ -82,7 +82,7 @@ typedef struct {
  *  @var notify       线程间通知的条件变量, 条件变量是利用线程间共享的全局变量进行同步的一种机制
  *  @var threads      线程数组，这里用指针来表示，数组名 = 首元素指针
  *  @var thread_count 线程数量
- *  @var queue        存储任务的数组，即任务队列, 结构体数组
+ *  @var queue        存储任务的数组，即任务队列, 结构体数组(当队列使用)
  *  @var queue_size   任务队列大小
  *  @var head         任务队列中首个任务位置（注：任务队列中所有任务都是未开始运行的）
  *  @var tail         任务队列中最后一个任务的下一个位置（注：队列以数组存储，head 和 tail 指示队列位置）
