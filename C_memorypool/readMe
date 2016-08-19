@@ -1,9 +1,10 @@
+方式一:
+
 根据STL源码内存池实现模式
 简单实现自己的内存池
 
 
-下标不同申请的内存不同
-使用结构体数组
+下标不同申请的内存区块不同
 typedef struct __Free_List__{
     int     ListId;           //freelist链表的下标
     struct  __Free_List__  *next;
@@ -17,14 +18,10 @@ struct __myFree_List__{
    void  *dList;          //返回申请内存的地址
 }
 
-
 获取内存时:
 遍历FreeList链表, 查找符合条件的myFree_List的头节点,  从链表第一个元素分配内存
 
 如果查询不到符合条件的区块, 从系统重新malloc新的内存, 放到对应myFree_List链表末尾
-
-
-
 
 //内存对齐
 freelist_index(size);
