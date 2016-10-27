@@ -5,19 +5,26 @@
 #include <pthread.h>
 #include <unistd.h>
 #include <assert.h>
+#include <string.h>
 
 #include "threadpool.h"
 
 int tasks = 0, done = 0;
 pthread_mutex_t lock;
 
+typedef struct tb_fans{
+    char localdate[9];
+    char locallogNo[7];
+    char localTime[7];
+}tBfans;
+
 void dummy_task(void *arg) {
     usleep(10000);
     pthread_mutex_lock(&lock);
     /* 记录成功完成的任务数 */
-    char *Buf; 
-    Buf= (char *)arg;
-    printf("Buf: %s\n", Buf);
+    tBfans *tfans;
+    tfans = (tBfans *)arg;
+    printf("localdate: %s\n", tfans->localdate);
     done++;
     pthread_mutex_unlock(&lock);
 }
@@ -25,6 +32,11 @@ void dummy_task(void *arg) {
 int main(int argc, char **argv)
 {
     threadpool_t *pool;
+    tBfans  tbfans;
+    memset(&tbfans, 0x00, sizeof(tBfans));
+    strncpy(tbfans.localdate, "20161027" ,8);
+    strncpy(tbfans.locallogNo, "347589", 6);
+    strncpy(tbfans.localTime, "110223", 6);
 
     /* 初始化互斥锁 */
     pthread_mutex_init(&lock, NULL);
@@ -35,9 +47,7 @@ int main(int argc, char **argv)
             "queue size of %d\n", THREAD, QUEUE);
 
     /* 只要任务队列还没满，就一直添加 */
-    char *buf = "tibco sms";
-    printf("buf: %s\n", buf);
-    while(threadpool_add(pool, &dummy_task, (void *)buf, 0) == 0) {
+    while(threadpool_add(pool, &dummy_task, (void *)&tbfans, 0) == 0) {
         pthread_mutex_lock(&lock);
         tasks++;
         pthread_mutex_unlock(&lock);
