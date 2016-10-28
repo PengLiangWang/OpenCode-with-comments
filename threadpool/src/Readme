@@ -1,0 +1,2 @@
+gcc -c -D_REENTRANT -lpthread -m32 threadpool.c -o threadpool.o    #加m32, 32位程序链接该静态库时,需要添加 -m32
+ar rcs libthreadpool.a threadpool.o 

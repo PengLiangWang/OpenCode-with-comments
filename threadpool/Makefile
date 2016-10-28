@@ -6,8 +6,7 @@ CFLAGS += -g
 LDFLAGS += -g
 endif
 
-TARGETS = tests/thrdtest tests/heavy tests/shutdown tests/structparam\
-	libthreadpool.so libthreadpool.a
+TARGETS = tests/thrdtest tests/heavy tests/shutdown tests/structparam libthreadpool.so libthreadpool.a
 
 all: $(TARGETS)
 
