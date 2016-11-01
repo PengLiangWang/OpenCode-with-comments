@@ -1,4 +1,8 @@
+<<<<<<< Updated upstream
 方式一:
+=======
+memorypool_base 是错误的.
+>>>>>>> Stashed changes
 
 根据STL源码内存池实现模式
 简单实现自己的内存池

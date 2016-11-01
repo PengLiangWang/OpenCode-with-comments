@@ -9,6 +9,8 @@
 
 #include "threadpool.h"
 
+/* 因为多线程共享同一个内存块，所以传参数的时候要注意 */
+
 int tasks = 0, done = 0;
 pthread_mutex_t lock;
 
@@ -23,14 +25,9 @@ void dummy_task(void *arg) {
     usleep(100);
     pthread_mutex_lock(&lock);
     /* 记录成功完成的任务数 */
-    /*
     tBfans *tfans;
     tfans = (tBfans *)arg;
-    */
-    int a;
-    a = *(int *)arg;
-    //printf("localdate: %s\ta: %d\n", tfans->localdate, tfans->a);
-    printf("a: %d\n", a);
+    printf("localdate: %s\ta: %d\n", tfans->localdate, tfans->a);
     done++;
     pthread_mutex_unlock(&lock);
 }
@@ -38,11 +35,11 @@ void dummy_task(void *arg) {
 int main(int argc, char **argv)
 {
     threadpool_t *pool;
-    tBfans  tbfans;
-    memset(&tbfans, 0x00, sizeof(tBfans));
-    strncpy(tbfans.localdate, "20161027" ,8);
-    strncpy(tbfans.locallogNo, "347589", 6);
-    strncpy(tbfans.localTime, "110223", 6);
+    int i;
+    tBfans tb;
+    tBfans fans[1000];   /* 结构体数组 */
+
+    strcpy(tb.localdate, "20161103");
 
     /* 初始化互斥锁 */
     pthread_mutex_init(&lock, NULL);
@@ -52,28 +49,19 @@ int main(int argc, char **argv)
     fprintf(stderr, "Pool started with %d threads and "
             "queue size of %d\n", THREAD, QUEUE);
 
-    /* 只要任务队列还没满，就循环一直添加 */
-    /*
-    while(threadpool_add(pool, &dummy_task, (void *)&tbfans, 0) == 0) {
-        pthread_mutex_lock(&lock);
-        tasks++;
-        pthread_mutex_unlock(&lock);
-    }
-    */
-    /*只添加一个任务*/
-    int i;
-    for(i=0; i<5; i++)
-    {    
-        tbfans.a = i;
-        printf("tbfans.a: %d\n", tbfans.a);
-        if(threadpool_add(pool, &dummy_task, (void *)&tbfans.a, 0) == 0) {
+    for( i=0 ; i<10 ; i++ )
+    {
+        tb.a = i;
+        fans[i] = tb;
+        if(threadpool_add(pool, &dummy_task, (void *)&fans[i], 0) == 0)
+        {
             pthread_mutex_lock(&lock);
             tasks++;
             pthread_mutex_unlock(&lock);
         }
     }
 
-    fprintf(stderr, "Added %d tasks\n", tasks); 
+    fprintf(stderr, "Added %d tasks\n", tasks);
 
     /* 不断检查任务数是否完成一半以上，没有则继续休眠 */
     /*
