@@ -169,7 +169,7 @@ threadpool_t *threadpool_create(int thread_count, int queue_size, int flags)
  err:
     if(pool) {
         threadpool_free(pool);
-    }
+   }
     return NULL;
 }
 
@@ -211,6 +211,7 @@ int threadpool_add(threadpool_t *pool, void (*function)(void *),
         /* 在 tail 的位置放置函数指针和参数，添加到任务队列 */
         pool->queue[pool->tail].function = function;
         pool->queue[pool->tail].argument = argument;
+        printf("function: %s, pool->tail:%d, argument: %d\n", (char *)function, pool->tail, *(int *)argument);
         /* 更新 tail 和 count */
         pool->tail = next;
         pool->count += 1;
